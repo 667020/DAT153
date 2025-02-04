@@ -12,7 +12,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DAT153_Obllig1_Quizzy"
-        tools:targetApi="31">
+        tools:targetApi="31"
+        >
         <activity
             android:name=".GalleryActivity"
             android:exported="false" />

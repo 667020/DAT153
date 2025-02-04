@@ -2,18 +2,18 @@ package com.hvl.no.dat153_obllig1_quizzy;
 
 public class GalleryItem {
     private String name;
-    private String imagePath;
+    private int image;
 
-    public GalleryItem(String name, String imagePath) {
+    public GalleryItem(String name, int image) {
         this.name = name;
-        this.imagePath = imagePath;
+        this.image = image;
     }
 
     public java.lang.String getName() {
         return name;
     }
 
-    public java.lang.String getImagePath() {
-        return imagePath;
+    public int getImage() {
+        return image;
     }
 }
