@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class ImageGalleryAdapter extends RecyclerView.Adapter<ImageGalleryAdapte
         this.context = context;
         this.galleryItems = galleryItems;
     }
-
+    // REVIEW THIS CODE1!!! prøv å forstå alt
     @NonNull
     @Override
     public ImageGalleryAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -32,8 +33,16 @@ public class ImageGalleryAdapter extends RecyclerView.Adapter<ImageGalleryAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ImageGalleryAdapter.MyViewHolder holder, int position) {
-        holder.imageTextView.setText(galleryItems.get(position).getName());
-        holder.imageView.setImageResource(galleryItems.get(position).getImage());
+        GalleryItem item = galleryItems.get(position);
+
+        holder.imageTextView.setText(item.getName());
+
+        Glide.with(context)
+                .load(item.getImageUri()) // Load from URI
+                .placeholder(R.drawable.placeholder) // Show placeholder while loading
+                .error(R.drawable.error_image) // Show error image if failed
+                .into(holder.imageView);
+
     }
 
     @Override
