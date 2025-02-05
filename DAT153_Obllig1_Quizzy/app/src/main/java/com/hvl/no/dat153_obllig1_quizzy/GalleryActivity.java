@@ -2,7 +2,9 @@ package com.hvl.no.dat153_obllig1_quizzy;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -28,39 +30,38 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 
 public class GalleryActivity extends AppCompatActivity {
-    private ActivityGalleryBinding binding;
     private List<GalleryItem> galleryItems;
     private String currentPhotoPath;
     private ImageGalleryAdapter adapter;
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityGalleryBinding.inflate(getLayoutInflater());
+        com.hvl.no.dat153_obllig1_quizzy.databinding.ActivityGalleryBinding binding = ActivityGalleryBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         RecyclerView recyclerView = findViewById(R.id.galleryRecyclerView);
+
+        sharedPreferences = getSharedPreferences("GalleryPrefs", Context.MODE_PRIVATE);
 
         // Back button
         binding.btnGalleryBack.setOnClickListener(v -> finish());
 
         // Image listen fra gallery items
         galleryItems = new ArrayList<>();
-        galleryItems.add(new GalleryItem("Duck", getUriFromDrawable(R.drawable.duck)));
-        galleryItems.add(new GalleryItem("Piggy", getUriFromDrawable(R.drawable.pig)));
-        galleryItems.add(new GalleryItem("Super Mario Bro", getUriFromDrawable(R.drawable.mario)));
-        galleryItems.add(new GalleryItem("Duck3", getUriFromDrawable(R.drawable.duck)));
-        galleryItems.add(new GalleryItem("Duck5", getUriFromDrawable(R.drawable.duck)));
-        galleryItems.add(new GalleryItem("Duck6", getUriFromDrawable(R.drawable.duck)));
-        galleryItems.add(new GalleryItem("Duck7", getUriFromDrawable(R.drawable.duck)));
+        loadSavedImages();
 
 
-        ImageGalleryAdapter adapter = new ImageGalleryAdapter(this,galleryItems);
+
+        adapter = new ImageGalleryAdapter(this, galleryItems);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -156,6 +157,28 @@ public class GalleryActivity extends AppCompatActivity {
         galleryItems.add(new GalleryItem(name, imageUri)); // ✅ Now using Uri
         adapter.notifyItemInserted(galleryItems.size() - 1);
         Toast.makeText(this, "Photo added!", Toast.LENGTH_SHORT).show();
+    }
+
+    // Save Image URI in SharedPreferences
+    private void saveImageUri (Uri imageUri) {
+        Set<String> savedUris = sharedPreferences.getStringSet("imageUris", new HashSet<>());
+        Set<String> updateUris = new HashSet<>(savedUris);
+        updateUris.add(imageUri.toString());
+
+        sharedPreferences.edit().putStringSet("imageUris", updateUris).apply();
+    }
+
+    private void loadSavedImages() {
+        Set<String> savedUris = sharedPreferences.getStringSet("imageUris", new HashSet<>());
+
+        galleryItems.add(new GalleryItem("Duck", getUriFromDrawable(R.drawable.duck)));
+        galleryItems.add(new GalleryItem("Piggy", getUriFromDrawable(R.drawable.pig)));
+        galleryItems.add(new GalleryItem("Super Mario Bro", getUriFromDrawable(R.drawable.mario)));
+
+        for (String uriString : savedUris) {
+            Uri imageUri = Uri.parse(uriString);
+            galleryItems.add(new GalleryItem("Saved Photo", imageUri));
+        }
     }
 }
 
