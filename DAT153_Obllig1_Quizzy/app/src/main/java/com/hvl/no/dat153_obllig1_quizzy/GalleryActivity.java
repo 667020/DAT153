@@ -24,6 +24,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.hvl.no.dat153_obllig1_quizzy.databinding.ActivityGalleryBinding;
 import com.hvl.no.dat153_obllig1_quizzy.databinding.DialogAddEntryBinding;
+import com.hvl.no.dat153_obllig1_quizzy.features.gallery.model.GalleryItem;
+import com.hvl.no.dat153_obllig1_quizzy.features.gallery.repo.GalleryRepository;
+import com.hvl.no.dat153_obllig1_quizzy.util.CameraHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +43,8 @@ public class GalleryActivity extends AppCompatActivity {
     private List<GalleryItem> galleryItems;
     private String currentPhotoPath;
     private ImageGalleryAdapter adapter;
-    private SharedPreferences sharedPreferences;
+    private GalleryRepository galleryRepository;
+    private Uri currentPhotoUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,28 +54,21 @@ public class GalleryActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.galleryRecyclerView);
 
-        sharedPreferences = getSharedPreferences("GalleryPrefs", Context.MODE_PRIVATE);
 
-        // Back button
-        binding.btnGalleryBack.setOnClickListener(v -> finish());
+        galleryRepository = new GalleryRepository(this);
 
-        // Image listen fra gallery items
-        galleryItems = new ArrayList<>();
-        loadSavedImages();
-
-
+        galleryItems = galleryRepository.loadGalleryItems();
 
         adapter = new ImageGalleryAdapter(this, galleryItems);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        // Buttons
+        binding.btnGalleryBack.setOnClickListener(v -> finish());
         binding.btnAddEntry.setOnClickListener(v -> showAddEntryDialog());
     }
 
-    // Hjelpemetode for å hente uri
-    private Uri getUriFromDrawable(int drawableID) {
-        return Uri.parse("android.resource://" + getPackageName() + "/" + drawableID);
-    }
+
 
     private void showAddEntryDialog() {
         DialogAddEntryBinding dialogBinding = DialogAddEntryBinding.inflate(LayoutInflater.from(this));
@@ -113,21 +110,28 @@ public class GalleryActivity extends AppCompatActivity {
 
     //Launch the camera and stores the imaage
     private void dispatchTakePictureIntent() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        Intent takePictureIntent;
+        try {
+            // Create the image file using the helper.
+            File photoFile = CameraHelper.createImageFile(this);
+            // Get the content URI from the helper.
+            currentPhotoUri = CameraHelper.getPhotoUri(this, photoFile);
+            // Store the file path if needed.
+            currentPhotoPath = photoFile.getAbsolutePath();
+            // Build the camera intent.
+            takePictureIntent = CameraHelper.buildCameraIntent(this, currentPhotoUri);
+        } catch (IOException e) {
+            Toast.makeText(this, "Error creating file!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Ensure there is an activity to handle the camera intent.
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            File photoFile = createImageFile();
-            if (photoFile == null) {
-                Toast.makeText(this, "Failed to create image file!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            Uri photoURI = FileProvider.getUriForFile(this, "com.hvl.no.dat153_obllig1_quizzy.fileprovider", photoFile);
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
             cameraLauncher.launch(takePictureIntent);
         } else {
             Toast.makeText(this, "No camera app found!", Toast.LENGTH_SHORT).show();
         }
     }
-
 
     // Activity result for camera
     private final ActivityResultLauncher<Intent> cameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -137,49 +141,15 @@ public class GalleryActivity extends AppCompatActivity {
         }
     });
 
-    // Create a file to store the captured image
-    private File createImageFile() {
-        try {
-            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            String imageFileName = "JPEG_" + timeStamp + "_";
-            File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-            File image = File.createTempFile(imageFileName, ".jpg", storageDir);
-            currentPhotoPath = image.getAbsolutePath();
-            return image;
-        } catch (IOException e) {
-            Toast.makeText(this, "Error creating file!", Toast.LENGTH_SHORT).show();
-            return null;
-        }
-    }
 
     // Add the new entry to RecyclerView
     private void addNewEntry(String name, Uri imageUri) {
         galleryItems.add(new GalleryItem(name, imageUri)); // ✅ Now using Uri
         adapter.notifyItemInserted(galleryItems.size() - 1);
-        Toast.makeText(this, "Photo added!", Toast.LENGTH_SHORT).show();
+        galleryRepository.saveImageUri(imageUri);
+        Toast.makeText(this, "Photo added!", Toast.LENGTH_SHORT).show();;
     }
 
-    // Save Image URI in SharedPreferences
-    private void saveImageUri (Uri imageUri) {
-        Set<String> savedUris = sharedPreferences.getStringSet("imageUris", new HashSet<>());
-        Set<String> updateUris = new HashSet<>(savedUris);
-        updateUris.add(imageUri.toString());
-
-        sharedPreferences.edit().putStringSet("imageUris", updateUris).apply();
-    }
-
-    private void loadSavedImages() {
-        Set<String> savedUris = sharedPreferences.getStringSet("imageUris", new HashSet<>());
-
-        galleryItems.add(new GalleryItem("Duck", getUriFromDrawable(R.drawable.duck)));
-        galleryItems.add(new GalleryItem("Piggy", getUriFromDrawable(R.drawable.pig)));
-        galleryItems.add(new GalleryItem("Super Mario Bro", getUriFromDrawable(R.drawable.mario)));
-
-        for (String uriString : savedUris) {
-            Uri imageUri = Uri.parse(uriString);
-            galleryItems.add(new GalleryItem("Saved Photo", imageUri));
-        }
-    }
 }
 
 

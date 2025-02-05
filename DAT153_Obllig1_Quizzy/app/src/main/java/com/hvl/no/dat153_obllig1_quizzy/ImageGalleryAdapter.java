@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.hvl.no.dat153_obllig1_quizzy.features.gallery.model.GalleryItem;
 
 import java.util.List;
 

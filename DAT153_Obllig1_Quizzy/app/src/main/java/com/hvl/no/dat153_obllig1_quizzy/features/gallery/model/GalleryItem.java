@@ -1,4 +1,4 @@
-package com.hvl.no.dat153_obllig1_quizzy;
+package com.hvl.no.dat153_obllig1_quizzy.features.gallery.model;
 
 import android.net.Uri;
 
