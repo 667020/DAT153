@@ -16,34 +16,44 @@ import java.util.List;
 
 public class ImageGalleryAdapter extends RecyclerView.Adapter<ImageGalleryAdapter.MyViewHolder> {
 
+    public interface OnGalleryItemClickListener {
+        void onGalleryItemClicked(GalleryItem item, int position);
+    }
+
     private Context context;
     private List<GalleryItem> galleryItems;
+    private OnGalleryItemClickListener listener;
 
-    public ImageGalleryAdapter(Context context, List<GalleryItem> galleryItems) {
+    public ImageGalleryAdapter(Context context, List<GalleryItem> galleryItems, OnGalleryItemClickListener listener) {
         this.context = context;
         this.galleryItems = galleryItems;
+        this.listener = listener;
     }
-    // REVIEW THIS CODE1!!! prøv å forstå alt
+
     @NonNull
     @Override
-    public ImageGalleryAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(context);
-        View view = inflater.inflate(R.layout.recycler_view_row, parent, false);
-        return new ImageGalleryAdapter.MyViewHolder(view);
+    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.recycler_view_row, parent, false);
+        return new MyViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ImageGalleryAdapter.MyViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         GalleryItem item = galleryItems.get(position);
-
         holder.imageTextView.setText(item.getName());
-
+        // load image with Glide or similar
         Glide.with(context)
-                .load(item.getImageUri()) // Load from URI
-                .placeholder(R.drawable.placeholder) // Show placeholder while loading
-                .error(R.drawable.error_image) // Show error image if failed
+                .load(item.getImageUri())
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.error_image)
                 .into(holder.imageView);
 
+        // Set click listener on the entire item.
+        holder.itemView.setOnClickListener(v -> {
+            if(listener != null) {
+                listener.onGalleryItemClicked(item, position);
+            }
+        });
     }
 
     @Override
@@ -52,12 +62,11 @@ public class ImageGalleryAdapter extends RecyclerView.Adapter<ImageGalleryAdapte
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
-
         ImageView imageView;
         TextView imageTextView;
+
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
-
             imageView = itemView.findViewById(R.id.imageView);
             imageTextView= itemView.findViewById(R.id.textImageName);
         }

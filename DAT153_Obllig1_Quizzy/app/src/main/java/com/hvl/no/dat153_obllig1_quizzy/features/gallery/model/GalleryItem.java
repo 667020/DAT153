@@ -18,4 +18,8 @@ public class GalleryItem {
     public Uri getImageUri() {
         return imageUri;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

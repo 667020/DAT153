@@ -11,8 +11,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
-
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -24,6 +25,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.hvl.no.dat153_obllig1_quizzy.databinding.ActivityGalleryBinding;
 import com.hvl.no.dat153_obllig1_quizzy.databinding.DialogAddEntryBinding;
+import com.hvl.no.dat153_obllig1_quizzy.databinding.DialogGalleryOptionsBinding;
+import com.hvl.no.dat153_obllig1_quizzy.databinding.DialogNameEntryBinding;
+import com.hvl.no.dat153_obllig1_quizzy.dialogs.DialogHelper;
 import com.hvl.no.dat153_obllig1_quizzy.features.gallery.model.GalleryItem;
 import com.hvl.no.dat153_obllig1_quizzy.features.gallery.repo.GalleryRepository;
 import com.hvl.no.dat153_obllig1_quizzy.util.CameraHelper;
@@ -33,13 +37,10 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
-
-public class GalleryActivity extends AppCompatActivity {
+public class GalleryActivity extends AppCompatActivity implements ImageGalleryAdapter.OnGalleryItemClickListener {
     private List<GalleryItem> galleryItems;
     private String currentPhotoPath;
     private ImageGalleryAdapter adapter;
@@ -48,53 +49,92 @@ public class GalleryActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         com.hvl.no.dat153_obllig1_quizzy.databinding.ActivityGalleryBinding binding = ActivityGalleryBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         RecyclerView recyclerView = findViewById(R.id.galleryRecyclerView);
 
-
         galleryRepository = new GalleryRepository(this);
-
         galleryItems = galleryRepository.loadGalleryItems();
 
-        adapter = new ImageGalleryAdapter(this, galleryItems);
+        adapter = new ImageGalleryAdapter(this, galleryItems, this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Buttons
         binding.btnGalleryBack.setOnClickListener(v -> finish());
-        binding.btnAddEntry.setOnClickListener(v -> showAddEntryDialog());
+
+        binding.btnAddEntry.setOnClickListener(v -> DialogHelper.showAddEntryDialog(this, new DialogHelper.OnAddEntryListener() {
+            @Override
+            public void onCameraSelected() {
+                openCamera();
+            }
+
+            @Override
+            public void onGallerySelected() {
+                // Open gallery
+                Toast.makeText(GalleryActivity.this, "Gallery selected", Toast.LENGTH_SHORT).show();
+            }
+        }));
+
     }
 
+    @Override
+    public void onGalleryItemClicked(GalleryItem item, int position) {
+        showOptionsDialog(item, position);
+    }
 
+    private void showOptionsDialog(GalleryItem item, int position) {
+        // Inflate custom dialog layout
+        DialogGalleryOptionsBinding binding = DialogGalleryOptionsBinding.inflate(LayoutInflater.from(this));
 
-    private void showAddEntryDialog() {
-        DialogAddEntryBinding dialogBinding = DialogAddEntryBinding.inflate(LayoutInflater.from(this));
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(binding.getRoot());
 
-        // Dialog instance
-        Dialog dialog =  new Dialog(this);
-        dialog.setContentView(dialogBinding.getRoot());
-
-        dialogBinding.btnAddFromCamera.setOnClickListener(v -> {
+        binding.tvDialogTitle.setText("Choose an option");
+        binding.btnEditName.setOnClickListener(v -> {
             dialog.dismiss();
-            openCamera();
+            DialogHelper.showNameDialog(this, new DialogHelper.OnNameEnteredListener() {
+                @Override
+                public void onNameEntered(String name) {
+                    // Update the item name and notify the adapter
+                    item.setName(name);
+                    adapter.notifyItemChanged(position);
+                    galleryRepository.saveImageUri(item.getImageUri()); // Save the updated item
+                }
+            });
         });
 
-
-        dialogBinding.btnAddFromGallery.setOnClickListener(v -> {
+        binding.btnDelete.setOnClickListener(v -> {
             dialog.dismiss();
-            // TODO: Fiks denne metoden !!
+            deleteItem(position);
         });
 
         dialog.show();
+    }
+
+    public void deleteItem(int position) {
+        GalleryItem item = galleryItems.get(position);
+
+        galleryItems.remove(position);
+
+        adapter.notifyItemRemoved(position);
+
+        galleryRepository.deleteImageUri(item.getImageUri());
+
+        Toast.makeText(this, "Photo deleted!", Toast.LENGTH_SHORT).show();
 
     }
 
-    private void openCamera() {if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
+
+
+
+    private void openCamera() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             dispatchTakePictureIntent();
-        }else {
+        } else {
             requestCameraPermissions.launch(Manifest.permission.CAMERA);
         }
     }
@@ -103,12 +143,12 @@ public class GalleryActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String> requestCameraPermissions = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
         if (isGranted) {
             dispatchTakePictureIntent();
-        }else {
-            Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show(); // HVA BETYR DETTE?  Egentlig sjekk hele metoden
+        } else {
+            Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show();
         }
     });
 
-    //Launch the camera and stores the imaage
+    // Launch the camera and store the image
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent;
         try {
@@ -133,23 +173,30 @@ public class GalleryActivity extends AppCompatActivity {
         }
     }
 
-    // Activity result for camera
-    private final ActivityResultLauncher<Intent> cameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-        if(result.getResultCode() == RESULT_OK) {
-            Uri photoUri = Uri.fromFile(new File(currentPhotoPath));
-            addNewEntry("new Photo", photoUri);
-        }
-    });
 
+
+    /**
+     * ActivityResultLauncher to handle the camera's result.
+     * When a photo is taken successfully, the Name Entry dialog is shown.
+     */
+    private final ActivityResultLauncher<Intent> cameraLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    // Show the Name Entry dialog via the helper.
+                    DialogHelper.showNameDialog(this, new DialogHelper.OnNameEnteredListener() {
+                        @Override
+                        public void onNameEntered(String name) {
+                            addNewEntry(name, currentPhotoUri);
+                        }
+                    });
+                }
+            });
 
     // Add the new entry to RecyclerView
     private void addNewEntry(String name, Uri imageUri) {
-        galleryItems.add(new GalleryItem(name, imageUri)); // ✅ Now using Uri
+        galleryItems.add(new GalleryItem(name, imageUri));
         adapter.notifyItemInserted(galleryItems.size() - 1);
         galleryRepository.saveImageUri(imageUri);
-        Toast.makeText(this, "Photo added!", Toast.LENGTH_SHORT).show();;
+        Toast.makeText(this, "Photo added!", Toast.LENGTH_SHORT).show();
     }
-
 }
-
-
