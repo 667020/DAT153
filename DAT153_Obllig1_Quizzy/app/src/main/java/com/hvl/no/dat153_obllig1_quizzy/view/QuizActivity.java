@@ -24,6 +24,7 @@ public class QuizActivity extends AppCompatActivity {
     private GalleryRepository galleryRepository;
     private List<GalleryItem> galleryItems;
     private String currentCorrectAnswer;
+    private int score = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,16 +44,19 @@ public class QuizActivity extends AppCompatActivity {
         binding.btnAnswer2.setOnClickListener(v -> checkAnswer(binding.btnAnswer2.getText().toString()));
         binding.btnAnswer3.setOnClickListener(v -> checkAnswer(binding.btnAnswer3.getText().toString()));
 
+        binding.tvScore.setText("Score: " + score);
         loadQuestion();
     }
 
     private void checkAnswer(String selectedAnswer) {
         if (selectedAnswer.equals(currentCorrectAnswer)) {
+            score++;
             Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Incorrect!", Toast.LENGTH_SHORT).show();
         }
         // Optionally add a short delay to let the user see the toast before loading the next question.
+        binding.tvScore.setText("Score: " + score);
         binding.imgQuizpic.postDelayed(this::loadQuestion, 1000);
 
     }
@@ -64,8 +68,7 @@ public class QuizActivity extends AppCompatActivity {
 
         Glide.with(this)
                 .load(selectedGalleryItem.getImageUri())
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.error_image)
+
                 .into(binding.imgQuizpic);
 
         List<String> answers = getQuizAnswers(randomIndex);
