@@ -40,20 +40,23 @@ public class QuizActivity extends AppCompatActivity {
             finish();
             return;
         }
-        binding.btnAnswer1.setOnClickListener(v -> checkAnswer(binding.btnAnswer1.getText().toString()));
-        binding.btnAnswer2.setOnClickListener(v -> checkAnswer(binding.btnAnswer2.getText().toString()));
-        binding.btnAnswer3.setOnClickListener(v -> checkAnswer(binding.btnAnswer3.getText().toString()));
+        binding.btnAnswer1.setOnClickListener(v ->
+                checkAnswer(binding.btnAnswer1, binding.btnAnswer1.getText().toString()));
+        binding.btnAnswer2.setOnClickListener(v ->
+                checkAnswer(binding.btnAnswer2, binding.btnAnswer2.getText().toString()));
+        binding.btnAnswer3.setOnClickListener(v ->
+                checkAnswer(binding.btnAnswer3, binding.btnAnswer3.getText().toString()));
 
         binding.tvScore.setText("Score: " + score);
         loadQuestion();
     }
 
-    private void checkAnswer(String selectedAnswer) {
+    private void checkAnswer(Button selectedButton, String selectedAnswer) {
         if (selectedAnswer.equals(currentCorrectAnswer)) {
             score++;
-            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
+            selectedButton.setBackgroundResource(R.drawable.button_background_correct);
         } else {
-            Toast.makeText(this, "Incorrect!", Toast.LENGTH_SHORT).show();
+            selectedButton.setBackgroundResource(R.drawable.button_background_incorrect);;
         }
         // Optionally add a short delay to let the user see the toast before loading the next question.
         binding.tvScore.setText("Score: " + score);
@@ -62,6 +65,10 @@ public class QuizActivity extends AppCompatActivity {
     }
 
     private void loadQuestion() {
+        binding.btnAnswer1.setBackgroundResource(R.drawable.button_background);
+        binding.btnAnswer2.setBackgroundResource(R.drawable.button_background);
+        binding.btnAnswer3.setBackgroundResource(R.drawable.button_background);
+
         int randomIndex = new Random().nextInt(galleryItems.size());
 
         GalleryItem selectedGalleryItem = galleryItems.get(randomIndex);
