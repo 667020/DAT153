@@ -1,32 +1,25 @@
-package com.hvl.no.dat153_obllig1_quizzy;
+package com.hvl.no.dat153_obllig1_quizzy.view;
 
 import android.Manifest;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.hvl.no.dat153_obllig1_quizzy.ImageGalleryAdapter;
+import com.hvl.no.dat153_obllig1_quizzy.R;
 import com.hvl.no.dat153_obllig1_quizzy.databinding.ActivityGalleryBinding;
-import com.hvl.no.dat153_obllig1_quizzy.databinding.DialogAddEntryBinding;
 import com.hvl.no.dat153_obllig1_quizzy.databinding.DialogGalleryOptionsBinding;
-import com.hvl.no.dat153_obllig1_quizzy.databinding.DialogNameEntryBinding;
 import com.hvl.no.dat153_obllig1_quizzy.dialogs.DialogHelper;
 import com.hvl.no.dat153_obllig1_quizzy.features.gallery.model.GalleryItem;
 import com.hvl.no.dat153_obllig1_quizzy.features.gallery.repo.GalleryRepository;
@@ -34,12 +27,7 @@ import com.hvl.no.dat153_obllig1_quizzy.util.CameraHelper;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class GalleryActivity extends AppCompatActivity implements ImageGalleryAdapter.OnGalleryItemClickListener {
     private List<GalleryItem> galleryItems;

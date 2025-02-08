@@ -1,16 +1,14 @@
-package com.hvl.no.dat153_obllig1_quizzy;
+package com.hvl.no.dat153_obllig1_quizzy.view;
 
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
 import android.content.Intent;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.hvl.no.dat153_obllig1_quizzy.R;
 import com.hvl.no.dat153_obllig1_quizzy.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
@@ -24,6 +22,11 @@ public class MainActivity extends AppCompatActivity {
 
         binding.btnGallery.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, GalleryActivity.class);
+            startActivity(intent);
+        });
+
+        binding.btnStartQuiz.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, QuizActivity.class);
             startActivity(intent);
         });
 
