@@ -16,6 +16,7 @@ public class GalleryRepository {
 
     private static final String PREFS_NAME = "GalleryPrefs";
     private static final String KEY_IMAGE_URIS = "imageUris";
+    private static final String DELIMITER = "::"; // Define the DELIMITER constant
 
     private final SharedPreferences sharedPreferences;
     private final Context context;
@@ -42,27 +43,30 @@ public class GalleryRepository {
         // Add any saved images from SharedPreferences.
         Set<String> savedUris = sharedPreferences.getStringSet(KEY_IMAGE_URIS, new HashSet<>());
         for (String uriString : savedUris) {
-            galleryItems.add(new GalleryItem("Saved Photo", Uri.parse(uriString)));
+            String[] parts = uriString.split(DELIMITER);
+            if (parts.length == 2) {
+                galleryItems.add(new GalleryItem(parts[0], Uri.parse(parts[1])));
+            }
         }
         return galleryItems;
     }
 
     // Saves a new image URI to SharedPreferences.
-    public void saveImageUri(Uri imageUri) {
+    public void saveImageUri(String name, Uri imageUri) {
         Set<String> savedUris = sharedPreferences.getStringSet(KEY_IMAGE_URIS, new HashSet<>());
         Set<String> updatedUris = new HashSet<>(savedUris);
-        updatedUris.add(imageUri.toString());
+        updatedUris.add(name + DELIMITER + imageUri.toString());
         sharedPreferences.edit().putStringSet(KEY_IMAGE_URIS, updatedUris).apply();
     }
 
-    public void deleteImageUri(Uri imageUri) {// Get the set of saved URIs.
+    public void deleteImageUri(Uri imageUri) {
+        // Get the set of saved URIs.
         Set<String> savedUris = sharedPreferences.getStringSet(KEY_IMAGE_URIS, new HashSet<>());
-        // create new set to avoid modifying the original set.
+        // Create new set to avoid modifying the original set.
         Set<String> updatedUris = new HashSet<>(savedUris);
         // Remove the URI to delete.
-        updatedUris.remove(imageUri.toString());
+        updatedUris.removeIf(uriString -> uriString.contains(imageUri.toString()));
         // Save the updated set of URIs.
         sharedPreferences.edit().putStringSet(KEY_IMAGE_URIS, updatedUris).apply();
     }
-
 }

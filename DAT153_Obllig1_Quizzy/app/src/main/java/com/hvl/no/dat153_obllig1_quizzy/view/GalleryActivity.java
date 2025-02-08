@@ -108,7 +108,7 @@ public class GalleryActivity extends AppCompatActivity implements ImageGalleryAd
                     // Update the item name and notify the adapter
                     item.setName(name);
                     adapter.notifyItemChanged(position);
-                    galleryRepository.saveImageUri(item.getImageUri()); // Save the updated item
+                    galleryRepository.saveImageUri(item.getName(), item.getImageUri()); // Save the updated item
                 }
             });
         });
@@ -210,7 +210,7 @@ public class GalleryActivity extends AppCompatActivity implements ImageGalleryAd
     private void addNewEntry(String name, Uri imageUri) {
         galleryItems.add(new GalleryItem(name, imageUri));
         adapter.notifyItemInserted(galleryItems.size() - 1);
-        galleryRepository.saveImageUri(imageUri);
+        galleryRepository.saveImageUri(name, imageUri);
         Toast.makeText(this, "Photo added!", Toast.LENGTH_SHORT).show();
     }
 }

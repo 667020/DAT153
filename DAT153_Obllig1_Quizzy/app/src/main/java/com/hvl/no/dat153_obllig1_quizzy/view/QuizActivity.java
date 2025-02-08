@@ -23,6 +23,7 @@ public class QuizActivity extends AppCompatActivity {
     private ActivityQuizBinding binding;
     private GalleryRepository galleryRepository;
     private List<GalleryItem> galleryItems;
+    private String currentCorrectAnswer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,7 +39,25 @@ public class QuizActivity extends AppCompatActivity {
             finish();
             return;
         }
+        binding.btnAnswer1.setOnClickListener(v -> checkAnswer(binding.btnAnswer1.getText().toString()));
+        binding.btnAnswer2.setOnClickListener(v -> checkAnswer(binding.btnAnswer2.getText().toString()));
+        binding.btnAnswer3.setOnClickListener(v -> checkAnswer(binding.btnAnswer3.getText().toString()));
 
+        loadQuestion();
+    }
+
+    private void checkAnswer(String selectedAnswer) {
+        if (selectedAnswer.equals(currentCorrectAnswer)) {
+            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Incorrect!", Toast.LENGTH_SHORT).show();
+        }
+        // Optionally add a short delay to let the user see the toast before loading the next question.
+        binding.imgQuizpic.postDelayed(this::loadQuestion, 1000);
+
+    }
+
+    private void loadQuestion() {
         int randomIndex = new Random().nextInt(galleryItems.size());
 
         GalleryItem selectedGalleryItem = galleryItems.get(randomIndex);
@@ -50,16 +69,12 @@ public class QuizActivity extends AppCompatActivity {
                 .into(binding.imgQuizpic);
 
         List<String> answers = getQuizAnswers(randomIndex);
-        String correctAnswer = answers.get(0);
+        currentCorrectAnswer = answers.get(0);
+
         Collections.shuffle(answers);
         binding.btnAnswer1.setText(answers.get(0));
         binding.btnAnswer2.setText(answers.get(1));
         binding.btnAnswer3.setText(answers.get(2));
-
-        setupButtonClickListener(binding.btnAnswer1, correctAnswer);
-        setupButtonClickListener(binding.btnAnswer2, correctAnswer);
-        setupButtonClickListener(binding.btnAnswer3, correctAnswer);
-
     }
 
     private List<String> getQuizAnswers(int randomIndex) {
@@ -74,14 +89,5 @@ public class QuizActivity extends AppCompatActivity {
         } return answers;
 
     }
-    private void setupButtonClickListener(Button button, String correctAnswer) {
-        button.setOnClickListener(v -> {
-            if (button.getText().toString().equals(correctAnswer)) {
-                Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Incorrect!", Toast.LENGTH_SHORT).show();
-            }
-            finish();
-        });
+
     }
-}
