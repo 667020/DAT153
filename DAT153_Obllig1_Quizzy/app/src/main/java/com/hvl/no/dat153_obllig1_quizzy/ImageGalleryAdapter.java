@@ -17,8 +17,7 @@ import java.util.List;
 public class ImageGalleryAdapter extends RecyclerView.Adapter<ImageGalleryAdapter.MyViewHolder> {
 
     public interface OnGalleryItemClickListener {
-        void onGalleryItemClicked(GalleryItem item, int position);
-    }
+        void onGalleryItemClicked(GalleryItem item, int position);}
 
     private Context context;
     private List<GalleryItem> galleryItems;

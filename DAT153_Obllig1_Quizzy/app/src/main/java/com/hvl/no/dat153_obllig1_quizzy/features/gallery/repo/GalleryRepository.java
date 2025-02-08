@@ -55,8 +55,7 @@ public class GalleryRepository {
         sharedPreferences.edit().putStringSet(KEY_IMAGE_URIS, updatedUris).apply();
     }
 
-    public void deleteImageUri(Uri imageUri) {
-        // Get the set of saved URIs.
+    public void deleteImageUri(Uri imageUri) {// Get the set of saved URIs.
         Set<String> savedUris = sharedPreferences.getStringSet(KEY_IMAGE_URIS, new HashSet<>());
         // create new set to avoid modifying the original set.
         Set<String> updatedUris = new HashSet<>(savedUris);

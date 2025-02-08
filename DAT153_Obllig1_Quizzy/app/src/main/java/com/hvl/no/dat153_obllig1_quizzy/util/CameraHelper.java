@@ -58,5 +58,4 @@ public class CameraHelper {
         return cameraIntent;
     }
 
-
 }

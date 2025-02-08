@@ -36,22 +36,24 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class GalleryActivity extends AppCompatActivity implements ImageGalleryAdapter.OnGalleryItemClickListener {
     private List<GalleryItem> galleryItems;
-    private String currentPhotoPath;
     private ImageGalleryAdapter adapter;
     private GalleryRepository galleryRepository;
     private Uri currentPhotoUri;
+    private boolean sortAscending = true;
+    private  ActivityGalleryBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        com.hvl.no.dat153_obllig1_quizzy.databinding.ActivityGalleryBinding binding = ActivityGalleryBinding.inflate(getLayoutInflater());
+        binding = ActivityGalleryBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         RecyclerView recyclerView = findViewById(R.id.galleryRecyclerView);
@@ -75,10 +77,26 @@ public class GalleryActivity extends AppCompatActivity implements ImageGalleryAd
             @Override
             public void onGallerySelected() {
                 // Open gallery
-                Toast.makeText(GalleryActivity.this, "Gallery selected", Toast.LENGTH_SHORT).show();
+                galleryLauncher.launch("image/*");
             }
         }));
 
+        binding.btnToggleSort.setOnClickListener(v -> toggleSortOrder());
+
+    }
+
+    private void toggleSortOrder() {
+        sortAscending = !sortAscending;
+
+        if (sortAscending) {
+            binding.btnToggleSort.setText("Sort: A-Z");
+            galleryItems.sort((item1, item2) -> item1.getName().compareToIgnoreCase(item2.getName()));
+        }else {
+            binding.btnToggleSort.setText("Sort: Z-A");
+            galleryItems.sort((item1, item2) -> item2.getName().compareToIgnoreCase(item1.getName()));
+        }
+
+        adapter.notifyDataSetChanged();
     }
 
     @Override
@@ -129,8 +147,6 @@ public class GalleryActivity extends AppCompatActivity implements ImageGalleryAd
     }
 
 
-
-
     private void openCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             dispatchTakePictureIntent();
@@ -148,6 +164,17 @@ public class GalleryActivity extends AppCompatActivity implements ImageGalleryAd
         }
     });
 
+    private final ActivityResultLauncher<String> galleryLauncher =
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+                if (uri != null) {
+                    // When the user selects an image, show the Name Entry dialog.
+                    DialogHelper.showNameDialog(this, name -> addNewEntry(name, uri));
+                }
+            });
+
+
+
+
     // Launch the camera and store the image
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent;
@@ -157,8 +184,7 @@ public class GalleryActivity extends AppCompatActivity implements ImageGalleryAd
             // Get the content URI from the helper.
             currentPhotoUri = CameraHelper.getPhotoUri(this, photoFile);
             // Store the file path if needed.
-            currentPhotoPath = photoFile.getAbsolutePath();
-            // Build the camera intent.
+            String currentPhotoPath = photoFile.getAbsolutePath();// Build the camera intent.
             takePictureIntent = CameraHelper.buildCameraIntent(this, currentPhotoUri);
         } catch (IOException e) {
             Toast.makeText(this, "Error creating file!", Toast.LENGTH_SHORT).show();
@@ -168,7 +194,7 @@ public class GalleryActivity extends AppCompatActivity implements ImageGalleryAd
         // Ensure there is an activity to handle the camera intent.
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
             cameraLauncher.launch(takePictureIntent);
-        } else {
+        } else { 
             Toast.makeText(this, "No camera app found!", Toast.LENGTH_SHORT).show();
         }
     }
