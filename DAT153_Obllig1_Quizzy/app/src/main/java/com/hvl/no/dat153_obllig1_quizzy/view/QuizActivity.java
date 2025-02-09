@@ -1,5 +1,8 @@
 package com.hvl.no.dat153_obllig1_quizzy.view;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.Toast;
@@ -25,6 +28,7 @@ public class QuizActivity extends AppCompatActivity {
     private List<GalleryItem> galleryItems;
     private String currentCorrectAnswer;
     private int score = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,11 +39,24 @@ public class QuizActivity extends AppCompatActivity {
         galleryRepository = new GalleryRepository(this);
         galleryItems = galleryRepository.loadGalleryItems();
 
-        if(galleryItems.isEmpty()) {
+        if (galleryItems.isEmpty()) {
             Toast.makeText(this, "No images in gallery", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
+
+        // Retrieve and use the URI
+        SharedPreferences sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+        String imageUriString = sharedPreferences.getString("image_uri", null);
+        Uri imageUri = imageUriString != null ? Uri.parse(imageUriString) : null;
+
+        if (imageUri != null) {
+            // Use the URI to load the image
+            Glide.with(this)
+                    .load(imageUri)
+                    .into(binding.imgQuizpic);
+        }
+
         binding.btnAnswer1.setOnClickListener(v ->
                 checkAnswer(binding.btnAnswer1, binding.btnAnswer1.getText().toString()));
         binding.btnAnswer2.setOnClickListener(v ->
@@ -56,12 +73,11 @@ public class QuizActivity extends AppCompatActivity {
             score++;
             selectedButton.setBackgroundResource(R.drawable.button_background_correct);
         } else {
-            selectedButton.setBackgroundResource(R.drawable.button_background_incorrect);;
+            selectedButton.setBackgroundResource(R.drawable.button_background_incorrect);
         }
         // Optionally add a short delay to let the user see the toast before loading the next question.
         binding.tvScore.setText("Score: " + score);
         binding.imgQuizpic.postDelayed(this::loadQuestion, 1000);
-
     }
 
     private void loadQuestion() {
@@ -75,7 +91,6 @@ public class QuizActivity extends AppCompatActivity {
 
         Glide.with(this)
                 .load(selectedGalleryItem.getImageUri())
-
                 .into(binding.imgQuizpic);
 
         List<String> answers = getQuizAnswers(randomIndex);
@@ -90,14 +105,13 @@ public class QuizActivity extends AppCompatActivity {
     private List<String> getQuizAnswers(int randomIndex) {
         List<String> answers = new ArrayList<>();
         answers.add(galleryItems.get(randomIndex).getName());
-        while(answers.size() < 3) {
+        while (answers.size() < 3) {
             int randomAnswerIndex = new Random().nextInt(galleryItems.size());
             String randomAnswer = galleryItems.get(randomAnswerIndex).getName();
-            if(!answers.contains(randomAnswer)) {
+            if (!answers.contains(randomAnswer)) {
                 answers.add(randomAnswer);
             }
-        } return answers;
-
+        }
+        return answers;
     }
-
-    }
+}
